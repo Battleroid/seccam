@@ -9,9 +9,9 @@ from camera import Camera
 
 
 class EventLoop:
-    def __init__(self, size=30 * 5, fps=10.0):
+    def __init__(self, size=5, fps=10.0):
         # Buffer(s)
-        self.size = int(size)
+        self.size = int(size * fps)
         self.pre_buffer = RingBuffer(self.size)
         self.post_buffer = []  # TODO: Replace with buffer that caches every so often
 
