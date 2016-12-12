@@ -3,7 +3,6 @@ import cv2 as cv
 
 
 class Camera:
-
     def __init__(self, src=0):
         self.cam = cv.VideoCapture(src)
         self.ok, self.frame = self.cam.read()
@@ -16,6 +15,7 @@ class Camera:
             self.ok, self.frame = self.cam.read()
 
     def start(self):
+        self.stopped = False
         Thread(target=self.update, args=()).start()
         # return self
 
@@ -24,3 +24,7 @@ class Camera:
 
     def read(self):
         return self.frame
+
+    def to_jpeg(self):
+        _, jpeg = cv.imencode('.jpg', self.frame)
+        return jpeg.tobytes()
