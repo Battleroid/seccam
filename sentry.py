@@ -23,6 +23,10 @@ class EventLoop:
         self.last_event = None
         self.cutoff = None
 
+        # For recording the poster image of an event
+        self.poster_image = None
+        self.max_area = None
+
     def update(self, frame):
         # Append to pre event or post event if recording
         if not self.recording:
@@ -120,8 +124,15 @@ class Sentry:
                 if max_area >= self.min_area:
                     if not self.loop.recording:
                         self.loop.start_event()
+                        self.loop.max_area = max_area
+                        self.loop.poster_image = frame
                     else:
                         self.loop.update_event()
+
+                    # Replace poster image for video if movement is larger
+                    if max_area is not None and max_area > self.loop.max_area:
+                        self.loop.max_area = max_area
+                        self.loop.poster_image = frame
 
             # Add frame to appropriate buffer
             self.loop.update(frame)
