@@ -1,8 +1,7 @@
 class RingBuffer:
-
     def __init__(self, size):
         self.data = []
-        self.size = size
+        self.size = int(size)
         self.ptr = 0
 
     def append(self, elem):

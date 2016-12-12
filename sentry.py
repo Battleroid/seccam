@@ -1,20 +1,22 @@
+import time
+from datetime import datetime, timedelta
+
 import cv2 as cv
 import imutils as im
-from datetime import datetime, timedelta
-from camera import Camera
+
 from buffer import RingBuffer
-import time
+from camera import Camera
 
 
 class EventLoop:
-
-    def __init__(self, size=30 * 5):
+    def __init__(self, size=30 * 5, fps=10.0):
         # Buffer(s)
-        self.size = size
-        self.pre_buffer = RingBuffer(size)
+        self.size = int(size)
+        self.pre_buffer = RingBuffer(self.size)
         self.post_buffer = []  # TODO: Replace with buffer that caches every so often
 
         # Recording
+        self.fps = fps
         self.recording = False
         self.event_name = None
         self.event_time = None
@@ -46,7 +48,6 @@ class EventLoop:
 
     def save(self):
         # Save video with event name & start time
-        # TODO: This should be a one shot thread
         name = '{event_name}-{event_time}.avi'.format(
             event_name=self.event_name,
             event_time=self.event_time.strftime('%Y_%m_%d_%H_%M_%S')
@@ -54,7 +55,7 @@ class EventLoop:
         h, w, _ = self.post_buffer[0].shape
         tape = self.pre_buffer.get() + self.post_buffer
         fourcc = cv.VideoWriter_fourcc(*'MJPG')
-        writer = cv.VideoWriter(name, fourcc, 30.0, (w, h))
+        writer = cv.VideoWriter(name, fourcc, self.fps, (w, h))
         for f in tape:
             writer.write(f)
         writer.release()
@@ -80,12 +81,12 @@ class EventLoop:
 
 
 class Sentry:
-
-    def __init__(self, src=0, min_area=250, verbose=False):
+    def __init__(self, fps=10.0, src=0, min_area=250, verbose=False):
         self.camera = Camera(src)
-        self.loop = EventLoop()
+        self.loop = EventLoop(size=fps * 5, fps=fps)
         self.min_area = min_area
         self.verbose = verbose
+        self.fps = fps
 
     def start(self):
         self.camera.start()
@@ -128,11 +129,16 @@ class Sentry:
             # Let loop decide if it's time to finish the event
             self.loop.check_cutoff()
 
+            # Show preview window if verbose mode is on
             if self.verbose:
                 cv.imshow('Sentry', frame)
                 cv.waitKey(1)
 
+            # Sleep for an interval to achieve our desired framerate target
+            time.sleep(1 / self.fps)
+
 
 if __name__ == '__main__':
+    # TODO: docopt or something similar for cli params
     s = Sentry(verbose=True)
     s.start()
