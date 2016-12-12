@@ -6,8 +6,7 @@ class Camera:
 
     def __init__(self, src=0):
         self.cam = cv.VideoCapture(src)
-        self.ok = None
-        self.frame = None
+        self.ok, self.frame = self.cam.read()
         self.stopped = False
 
     def update(self):
@@ -18,7 +17,7 @@ class Camera:
 
     def start(self):
         Thread(target=self.update, args=()).start()
-        return self
+        # return self
 
     def stop(self):
         self.stopped = True
