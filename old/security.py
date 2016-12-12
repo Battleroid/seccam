@@ -5,8 +5,8 @@ from time import sleep
 from buffer import RingBuffer
 
 # Camera and average frame information
-cam = cv.VideoCapture(1)
-sleep(0.25)  # Ramp up time
+cam = cv.VideoCapture(0)
+sleep(1)  # Ramp up time
 avg = None
 
 # Event info and recording indicator
@@ -42,7 +42,7 @@ while True:
 
             # seed pre buffer with last event's information
             tail_frames = post_buffer[-pre_buffer.size:]
-            for f in range(pre_buffer.size):
+            for f in range(pre_buffer.size - 1):
                 pre_buffer.append(tail_frames[f])
 
             # Reset for next event
