@@ -38,6 +38,7 @@ Parameter | Default | Help
 --addr | `127.0.0.1:8080` | Stream location, access via `/video.mjpg`.
 -d --debug | *n/a* | Displays UI window of camera feed.
 --name | System hostname | Label for the camera events when saving/uploading.
+--noup | *n/a* | Whether or not to upload the event.
 
 *: High framerates require more resources and will consume much more data to store video both in memory and on disk.
 
