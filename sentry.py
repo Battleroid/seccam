@@ -14,6 +14,7 @@ Options:
     --stream          Stream the video feed.
     --addr=<address>  Address/port to attach to for streaming [default: 127.0.0.1:8080].
     -d --debug        Show current video feed in window.
+    --name=<name>     Label for camera when uploading video.
 '''
 __version__ = '0.1'
 
@@ -108,6 +109,7 @@ if __name__ == '__main__':
     fps = int(args['--fps'])
     debug = args['--debug']
     url = args['<URL>']
+    name = args['--name']
 
     # Server related
     streaming = args['--stream']

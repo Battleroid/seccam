@@ -7,10 +7,11 @@ import requests
 from buffer import RingBuffer
 from PIL import Image
 from urllib.parse import urljoin
+from socket import gethostname
 
 
 class EventLoop:
-    def __init__(self, url, size=5, fps=10.0):
+    def __init__(self, url, name=None, size=5, fps=10.0):
         # Buffer(s)
         self.size = int(size * fps)
         self.pre_buffer = RingBuffer(self.size)
@@ -30,6 +31,9 @@ class EventLoop:
 
         # Uploading
         self.url = url
+        self.name = name
+        if name is None:
+            self.name = gethostname()
 
     def update(self, frame):
         # Append to pre event or post event if recording
@@ -42,10 +46,12 @@ class EventLoop:
         self.last_event = datetime.now()
         self.cutoff = self.last_event + timedelta(0, 5)
 
-    def start_event(self, event_name='event'):
+    def start_event(self, event_name=None):
         # Label the video and start recording
         self.recording = True
         self.event_name = event_name
+        if event_name is None:
+            self.event_name = self.name
         self.event_time = datetime.now()
         self.update_event()
 
@@ -56,9 +62,9 @@ class EventLoop:
 
     def save(self):
         # Save video with event name & start time
-        name = '{event_name}-{event_time}'.format(
+        name = '{event_name} {event_time}'.format(
             event_name=self.event_name,
-            event_time=self.event_time.strftime('%Y_%m_%d_%H_%M_%S')
+            event_time=self.event_time.strftime('%Y-%m-%d %H-%M-%S')
         )
         video_name = name + '.avi'
         image_name = name + '.jpg'
