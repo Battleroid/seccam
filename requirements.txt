@@ -1,0 +1,6 @@
+docopt==0.6.2
+imutils==0.3.6
+numpy==1.11.2
+opencv-python==3.1.0
+Pillow==3.4.2
+requests==2.12.3
