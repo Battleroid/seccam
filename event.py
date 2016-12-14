@@ -8,10 +8,11 @@ from buffer import RingBuffer
 from PIL import Image
 from urllib.parse import urljoin
 from socket import gethostname
+from threading import Thread
 
 
 class EventLoop:
-    def __init__(self, url, name=None, size=5, fps=10.0):
+    def __init__(self, url, name=None, noup=False, size=5, fps=10.0):
         # Buffer(s)
         self.size = int(size * fps)
         self.pre_buffer = RingBuffer(self.size)
@@ -32,6 +33,7 @@ class EventLoop:
         # Uploading
         self.url = url
         self.name = name
+        self.noup = noup
         if name is None:
             self.name = gethostname()
 
@@ -81,19 +83,8 @@ class EventLoop:
         logging.info('Saving video and image as {}'.format(
             name
         ))
-        self._upload(name, video_name, image_name)
-
-    def _upload(self, name, video_name, image_name):
-        dest = urljoin(self.url, '/event/new')
-        files = {
-            'video': open(video_name, 'rb'),
-            'image': open(image_name, 'rb')
-        }
-        data = {
-            'name': name
-        }
-        resp = requests.post(dest, params=data, files=files)
-        logging.info('Uploaded, status: {}'.format(resp.ok))
+        if not self.noup:
+            Upload(video_name, image_name, name, self.url).start()
 
     def finish(self):
         # Flush buffers and save video
@@ -113,3 +104,25 @@ class EventLoop:
         for f in tail_frames:
             self.pre_buffer.append(f)
         self.post_buffer = []
+
+
+class Upload(Thread):
+    def __init__(self, video, image, name, url):
+        super().__init__()
+        self.video = video
+        self.image = image
+        self.name = name
+        self.url = url
+
+    def run(self):
+        dest = urljoin(self.url, '/event/new')
+        files = {
+            'video': open(self.video, 'rb'),
+            'image': open(self.image, 'rb')
+        }
+        data = {
+            'name': self.name
+        }
+        resp = requests.post(dest, params=data, files=files)
+        logging.info('Uploaded, status: {}'.format(resp.ok))
+        return

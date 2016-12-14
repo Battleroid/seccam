@@ -15,6 +15,7 @@ Options:
     --addr=<address>  Address/port to attach to for streaming [default: 127.0.0.1:8080].
     -d --debug        Show current video feed in window.
     --name=<name>     Label for camera when uploading video.
+    --noup            Do not upload to remote.
 '''
 __version__ = '0.1'
 
@@ -33,9 +34,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Sentry:
-    def __init__(self, url, fps=5.0, src=0, min_area=250, verbose=False):
+    def __init__(self, url, fps=5.0, src=0, min_area=250, noup=True, verbose=False):
         self.camera = Camera(src)
-        self.loop = EventLoop(url, size=fps * 5, fps=fps)
+        self.loop = EventLoop(url, noup=noup, size=fps * 5, fps=fps)
         self.min_area = min_area
         self.verbose = verbose
         self.fps = fps
@@ -110,6 +111,7 @@ if __name__ == '__main__':
     debug = args['--debug']
     url = args['<URL>']
     name = args['--name']
+    noup = args['--noup']
 
     # Server related
     streaming = args['--stream']
@@ -117,7 +119,7 @@ if __name__ == '__main__':
     port = int(port)
 
     # If streaming the stream first
-    sentry = Sentry(url, src=src, fps=fps, verbose=debug)
+    sentry = Sentry(url, noup=noup, src=src, fps=fps, verbose=debug)
 
     # Start streaming MJPG portion if required
     if streaming:
