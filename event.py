@@ -1,16 +1,20 @@
 from datetime import datetime, timedelta
 
 import cv2 as cv
+import logging
+import requests
 
 from buffer import RingBuffer
+from PIL import Image
+from urllib.parse import urljoin
 
 
 class EventLoop:
-    def __init__(self, size=5, fps=10.0):
+    def __init__(self, url, size=5, fps=10.0):
         # Buffer(s)
         self.size = int(size * fps)
         self.pre_buffer = RingBuffer(self.size)
-        self.post_buffer = []  # TODO: Replace with buffer that caches every so often
+        self.post_buffer = []
 
         # Recording
         self.fps = fps
@@ -23,6 +27,9 @@ class EventLoop:
         # For recording the poster image of an event
         self.poster_image = None
         self.max_area = None
+
+        # Uploading
+        self.url = url
 
     def update(self, frame):
         # Append to pre event or post event if recording
@@ -49,17 +56,38 @@ class EventLoop:
 
     def save(self):
         # Save video with event name & start time
-        name = '{event_name}-{event_time}.avi'.format(
+        name = '{event_name}-{event_time}'.format(
             event_name=self.event_name,
             event_time=self.event_time.strftime('%Y_%m_%d_%H_%M_%S')
         )
+        video_name = name + '.avi'
+        image_name = name + '.jpg'
         h, w, _ = self.post_buffer[0].shape
         tape = self.pre_buffer.get() + self.post_buffer
         fourcc = cv.VideoWriter_fourcc(*'MJPG')
-        writer = cv.VideoWriter(name, fourcc, self.fps, (w, h))
+        writer = cv.VideoWriter(video_name, fourcc, self.fps, (w, h))
         for f in tape:
             writer.write(f)
         writer.release()
+        rgb = cv.cvtColor(self.poster_image, cv.COLOR_BGR2RGB)
+        jpeg = Image.fromarray(rgb)
+        jpeg.save(image_name)
+        logging.info('Saving video and image as {}'.format(
+            name
+        ))
+        self._upload(name, video_name, image_name)
+
+    def _upload(self, name, video_name, image_name):
+        dest = urljoin(self.url, '/event/new')
+        files = {
+            'video': open(video_name, 'rb'),
+            'image': open(image_name, 'rb')
+        }
+        data = {
+            'name': name
+        }
+        resp = requests.post(dest, params=data, files=files)
+        logging.info('Uploaded, status: {}'.format(resp.ok))
 
     def finish(self):
         # Flush buffers and save video

@@ -1,4 +1,25 @@
+'''Sentry camera.
+
+URL points to the accompanying seccam-web instance which will process
+events, store videos and images in duplicate, and notify the owner of
+newly captured events.
+
+Usage:
+    sentry.py [options] <URL>
+
+Options:
+    -h --help         Show this screen.
+    -s --src=<src>    Camera source [default: 0].
+    -f --fps=<fps>    Camera/stream framerate [default: 5].
+    --stream          Stream the video feed.
+    --addr=<address>  Address/port to attach to for streaming [default: 127.0.0.1:8080].
+    -d --debug        Show current video feed in window.
+'''
+__version__ = '0.1'
+
 import time
+import docopt
+import logging
 
 import cv2 as cv
 import imutils as im
@@ -7,11 +28,13 @@ from camera import Camera
 from event import EventLoop
 from server import Server
 
+logging.basicConfig(level=logging.INFO)
+
 
 class Sentry:
-    def __init__(self, fps=5.0, src=0, min_area=250, verbose=False):
+    def __init__(self, url, fps=5.0, src=0, min_area=250, verbose=False):
         self.camera = Camera(src)
-        self.loop = EventLoop(size=fps * 5, fps=fps)
+        self.loop = EventLoop(url, size=fps * 5, fps=fps)
         self.min_area = min_area
         self.verbose = verbose
         self.fps = fps
@@ -47,6 +70,9 @@ class Sentry:
                 max_area = cv.contourArea(max(contours, key=cv.contourArea))
                 if max_area >= self.min_area:
                     if not self.loop.recording:
+                        logging.info('Area exceeded ({} > {}), starting capture'.format(
+                            max_area, self.min_area
+                        ))
                         self.loop.start_event()
                         self.loop.max_area = max_area
                         self.loop.poster_image = frame
@@ -74,10 +100,31 @@ class Sentry:
 
 
 if __name__ == '__main__':
-    # TODO: docopt or something similar for cli params
-    s = Sentry(src=1, verbose=True)
-    server = Server(s.camera, fps=s.fps)
+    # Collect args
+    args = docopt.docopt(__doc__, version='Sentry {}'.format(__version__))
 
-    # Start main loop last
-    server.start()
-    s.start()
+    # Sentry related
+    src = int(args['--src'])
+    fps = int(args['--fps'])
+    debug = args['--debug']
+    url = args['<URL>']
+
+    # Server related
+    streaming = args['--stream']
+    addr, port = args['--addr'].split(':')
+    port = int(port)
+
+    # If streaming the stream first
+    sentry = Sentry(url, src=src, fps=fps, verbose=debug)
+
+    # Start streaming MJPG portion if required
+    if streaming:
+        server = Server(sentry.camera, fps=sentry.fps, addr=addr, port=port)
+        logging.info('Streaming MJPG server at {}:{}'.format(
+            addr, str(port)
+        ))
+        server.start()
+
+    # Finally start the sentry
+    logging.info('Starting Sentry')
+    sentry.start()
