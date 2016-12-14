@@ -32,10 +32,11 @@ class EventLoop:
 
         # Uploading
         self.url = url
-        self.name = name
         self.noup = noup
         if name is None:
             self.name = gethostname()
+        else:
+            self.name = name
 
     def update(self, frame):
         # Append to pre event or post event if recording

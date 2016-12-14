@@ -34,9 +34,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Sentry:
-    def __init__(self, url, fps=5.0, src=0, min_area=250, noup=True, verbose=False):
+    def __init__(self, url, name=None, fps=5.0, src=0, min_area=250, noup=True, verbose=False):
         self.camera = Camera(src)
-        self.loop = EventLoop(url, noup=noup, size=fps * 5, fps=fps)
+        self.loop = EventLoop(url, name=name, noup=noup, size=fps * 5, fps=fps)
         self.min_area = min_area
         self.verbose = verbose
         self.fps = fps
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     port = int(port)
 
     # If streaming the stream first
-    sentry = Sentry(url, noup=noup, src=src, fps=fps, verbose=debug)
+    sentry = Sentry(url, name=name, noup=noup, src=src, fps=fps, verbose=debug)
 
     # Start streaming MJPG portion if required
     if streaming:
