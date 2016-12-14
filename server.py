@@ -17,6 +17,9 @@ class SampleHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
             while True:
+                if self.cam is None:
+                    return
+
                 # Convert frame from 3D array to jpeg
                 rgb = cv.cvtColor(self.cam.read(), cv.COLOR_BGR2RGB)
                 jpeg = Image.fromarray(rgb)

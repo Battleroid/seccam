@@ -9,7 +9,7 @@ from server import Server
 
 
 class Sentry:
-    def __init__(self, fps=10.0, src=0, min_area=250, verbose=False):
+    def __init__(self, fps=5.0, src=0, min_area=250, verbose=False):
         self.camera = Camera(src)
         self.loop = EventLoop(size=fps * 5, fps=fps)
         self.min_area = min_area
@@ -75,8 +75,8 @@ class Sentry:
 
 if __name__ == '__main__':
     # TODO: docopt or something similar for cli params
-    s = Sentry(verbose=True)
-    server = Server(s.camera)
+    s = Sentry(src=1, verbose=True)
+    server = Server(s.camera, fps=s.fps)
 
     # Start main loop last
     server.start()
